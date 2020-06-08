@@ -1,0 +1,36 @@
+pipeline {
+    environment {
+        registry = "abdulhafis786/docker"
+        registryCredentials = 'dockerhub'
+        dockerImage  = ''
+    }
+    agent any
+    stages{
+        stage ('Cloning git') {
+            steps {
+                git 'https://github.com/abdulhafis786/docker-test-jenkins.git'
+            }
+        }
+        stage ('Building image') {
+            steps {
+                script {
+                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
+                }
+            }
+        }
+        stage ('Deploy image') {
+            steps {
+                script {
+                    docker.withRegistry( '' , registryCredentials ) {
+                        dockerImage.push ()
+                    }
+                }
+            }
+        }
+        stage ('Remove unused images') {
+            steps {
+              sh "docker system prune -a -f"
+            }
+        }
+    }
+}
